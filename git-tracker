@@ -1,0 +1,159 @@
+#!/usr/bin/env python
+
+
+#*
+#* git-tracker - updates local cloned git repos
+#* Copyright (C) 2009 Ivan Zorin <ivan.a.zorin@gmail.com>
+#*
+#* git-tracker is free software.
+#*
+#* You may redistribute it and/or modify it under the terms of the
+#* GNU General Public License, as published by the Free Software
+#* Foundation; either version 3 of the License, or (at your option)
+#* any later version.
+#*
+#* toolchain is distributed in the hope that it will be useful,
+#* but WITHOUT ANY WARRANTY; without even the implied warranty of
+#* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#* See the GNU General Public License for more details.
+#*
+#* You should have received a copy of the GNU General Public License
+#* along with main.c.  If not, write to:
+#* 	The Free Software Foundation, Inc.,
+#* 	51 Franklin Street, Fifth Floor
+#* 	Boston, MA  02110-1301, USA.
+#*
+
+#* See README for USAGE info!
+
+
+import os;
+import sys;
+import gtk;
+import gobject;
+import pynotify;
+import time;
+
+
+import git_tray;
+import git_cmd;
+import git_notify;
+
+
+def notify_init():
+	#initialize notification system;
+	if not pynotify.init("git track status"):
+		print "Unable to initialize Python Notify";
+		sys.exit(1);
+	
+	return 0;
+
+
+def init():
+	#check .gitconfig for track settings;
+	#check notification-daemon installing;
+	notify_missing_data = os.popen("dpkg -l notification-daemon > /dev/null 2>&1; echo $?");
+	notify_missing = int(notify_missing_data.read());
+	notify_missing_data.close();
+	#check update time;
+	update_time_data = os.popen("git config --global --get-all track.update");
+	update_time = int(update_time_data.read());
+	update_time_data.close();
+	#if update time is not set, then set default;
+	if not update_time:
+		os.system("git-config --global --add track.update 60");
+	#check notify time;
+	notify_time_data = os.popen("git config --global --get-all track.notify");
+	notify_time = notify_time_data.read();
+	notify_time_data.close();
+	#if notification daemon not available, then turn off notificaions;
+	if notify_missing:
+		os.system("git-config --global --add track.notify 0");
+	else:
+		if notify_time == "":
+			os.system("git-config --global --add track.notify 10");
+	#check pull action;
+	pull_data = os.popen("git config --global --get-all track.pull");
+	pull = pull_data.read();
+	pull_data.close();
+	#if pull action is not set, then set default;
+	if not pull:
+		os.system("git-config --global --add track.pull false");
+
+	return 0;
+
+
+def settings():
+	#getting settings from .gitconfig file for gitracker;
+	#list of local repos for checking;
+	repo_data = os.popen("git config --global --get-all track.uri");
+	repo_list = repo_data.readlines();
+	repo_data.close();
+	#update interval;
+	update_time_data = os.popen("git config --global --get-all track.update");
+	update_time = int(update_time_data.readline());
+	update_time_data.close();
+	#notification time;
+	notify_time_data = os.popen("git config --global --get-all track.notify");
+	notify_time = int(notify_time_data.readline());
+	notify_time_data.close();
+	#pulling by default, if updates available?;
+	pull_data = os.popen("git config --global --get-all track.pull");
+	pull = pull_data.read();
+	pull_data.close();
+	#converting pull var into bool;
+	pull = pull.strip();
+	if pull == "true" or pull == "1":
+		pull = bool(pull);
+		pull = True;
+	else:
+		pull = bool(pull);
+		pull = False
+	
+	return update_time, notify_time, pull, repo_list;
+
+
+def main(repo_list, pull, notify_time, git_icon):
+	#main - checking each repo in repo list for updates;
+	for repo in repo_list:
+		repo = repo.strip();
+		if git_cmd.check(repo):
+			#showing notify if updates available;
+			repo_log = git_cmd.log(repo);
+			if notify_time:
+				git_notify.update(repo, repo_log, pull, notify_time, git_icon);
+			if pull:
+				#pulling updates and shows notify with commit message about it;
+				git_cmd.pull(repo);
+				pull_log = git_cmd.log(repo);
+				git_notify.pull(repo, pull_log, notify_time, git_icon);
+	
+	return True;
+
+
+if __name__ == '__main__':
+	#mainline code;
+	#initialize default settings;
+	init();
+	#get paths to icon images;
+	git_notify_icon = "/usr/share/git-tracker/icons/git-icon-32.png";
+	git_tray_icon = "/usr/share/git-tracker/icons/git-icon-64.png";
+	git_tray_upd_icon = "/usr/share/git-tracker/icons/git-icon-upd-64.png";
+	#gerring general settings;
+	update_time, notify_time, pull, repo_list = settings();
+	#init notifications only if available;
+	if notify_time:
+		notify_init();
+	#showing tray icon;
+	tray = git_tray.init(git_tray_icon);
+	#setting tray icon's update state;
+	gobject.timeout_add(update_time * 60 * 1000, git_tray.state, tray, git_tray_upd_icon);
+	#setting main's function timer;
+	gobject.timeout_add(update_time * 60 * 1000 + 1000, main, repo_list, pull, notify_time, git_notify_icon);
+	#setting tray icon's default state;
+	gobject.timeout_add(update_time * 60 * 1000 + 2000, git_tray.state, tray, git_tray_icon);
+	#starting main gtk loop;
+	gtk.main()
+
+
+

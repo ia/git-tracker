@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=Application
+Version=0.1
+Name=git-tracker
+GenericName=
+Comment=Notification Area Icon for Git
+Icon=git-tracker-logo
+Exec=git-tracker
+Categories=Application;Development;RevisionControl;
+Terminal=false

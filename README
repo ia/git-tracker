@@ -1,0 +1,44 @@
+USAGE:
+------
+git-tracker - simple set of python scripts,
+which uses git commands for updating your local copies of cloned git repos.
+
+
+SETTINGS:
+git-tracker uses ~/.gitconfig for settings.
+After it runs, it checks ~/.gitconfig, and, if there is no "track" section,
+then creates it with default values for options.
+Here example of "track" section in .gitconfig (see also WARNING 1):
+...
+[track]
+	update = 60
+	notify = 10
+	pull = false
+	uri = /home/ia/devel/src/git
+	uri = /home/ia/devel/src/other-cloned-local-git-repo
+	uri = ...
+...
+legend:
+* update - time interval (in _minutes_) for checking updates;
+* notify - time (_in seconds_) for showing notifications;
+if 0, then app doesn't show notifies
+* pull - pulling updates, if available. So, if its "false", then app just
+shows notification with the latest commit message from updatable repo;
+if it's "true", then app pulling updates(see also WARNING 2)
+* uri - full path to local cloned git repo; _without_ "/" in the end.
+
+
+WARNINGS:
+* 1. at present time there is no any fool-tolerance checks for "track" settings in gitconfig.
+* 2. checking of updates and pulling works _only_ with master branch;
+so, if in some repo, which declared in "uri" option, current branch name _is not_ "master",
+then probably will be errors during running app.
+
+
+author
+------
+Ivan Zorin <ivan.a.zorin@gmail.com>
+
+
+P.S. git icons, commands, and their source code are copyrighted by "git" authors.
+See http://git.or.cz for more information about git and copyright info.
