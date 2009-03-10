@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 
 #*
@@ -35,9 +35,9 @@ import pynotify;
 import time;
 
 
-import git_tray;
-import git_cmd;
-import git_notify;
+from gitlib import git_tray;
+from gitlib import git_cmd;
+from gitlib import git_notify;
 
 
 def notify_init():
@@ -57,28 +57,28 @@ def init():
 	notify_missing_data.close();
 	#check update time;
 	update_time_data = os.popen("git config --global --get-all track.update");
-	update_time = int(update_time_data.read());
+	update_time = update_time_data.read();
 	update_time_data.close();
 	#if update time is not set, then set default;
 	if not update_time:
-		os.system("git-config --global --add track.update 60");
+		os.system("git config --global --add track.update 60");
 	#check notify time;
 	notify_time_data = os.popen("git config --global --get-all track.notify");
 	notify_time = notify_time_data.read();
 	notify_time_data.close();
 	#if notification daemon not available, then turn off notificaions;
 	if notify_missing:
-		os.system("git-config --global --add track.notify 0");
+		os.system("git config --global --add track.notify 0");
 	else:
 		if notify_time == "":
-			os.system("git-config --global --add track.notify 10");
+			os.system("git config --global --add track.notify 10");
 	#check pull action;
 	pull_data = os.popen("git config --global --get-all track.pull");
 	pull = pull_data.read();
 	pull_data.close();
 	#if pull action is not set, then set default;
 	if not pull:
-		os.system("git-config --global --add track.pull false");
+		os.system("git config --global --add track.pull false");
 
 	return 0;
 

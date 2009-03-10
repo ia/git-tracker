@@ -29,10 +29,10 @@ setup(
 	scripts = ['git-tracker'],
 	url = "http://github.com/ia/git-tracker/tree/master",
 	package_dir = {
-		"git-tracker.plugins.gtk": ".",
+		"gitlib": ".",
 	},
 	packages = [
-		"git-tracker.plugins.gtk",
+		"gitlib",
 	],
 	data_files=[('share/git-tracker/icons', ['icons/git-icon-32.png',
 				'icons/git-icon-48.png',
